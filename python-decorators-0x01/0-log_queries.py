@@ -5,11 +5,17 @@ import functools
 def log_queries(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        query = kwargs.get("query") or (args[0] if args else None)
-        if query:
-            print(f"Executing SQL Query: {query}")
+        # If query is passed as positional or keyword argument, log it
+        if args:
+            print(f"[LOG] Executing SQL Query: {args[0]}")
+        elif "query" in kwargs:
+            print(f"[LOG] Executing SQL Query: {kwargs['query']}")
+        else:
+            print("[LOG] No SQL Query provided")
+        
         return func(*args, **kwargs)
     return wrapper
+
 
 @log_queries
 def fetch_all_users(query):
@@ -20,7 +26,6 @@ def fetch_all_users(query):
     conn.close()
     return results
 
+
 #### fetch users while logging the query
-if __name__ == "__main__":
-    users = fetch_all_users(query="SELECT * FROM users")
-    print(users)
+users = fetch_all_users(query="SELECT * FROM use
