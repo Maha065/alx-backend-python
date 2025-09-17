@@ -1,3 +1,4 @@
+from datetime import datetime
 import sqlite3
 import functools
 
@@ -5,7 +6,7 @@ import functools
 def log_queries(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        # If query is passed as positional or keyword argument, log it
+        # Handle both positional and keyword query arguments
         if args:
             print(f"[LOG] Executing SQL Query: {args[0]}")
         elif "query" in kwargs:
@@ -28,4 +29,5 @@ def fetch_all_users(query):
 
 
 #### fetch users while logging the query
-users = fetch_all_users(query="SELECT * FROM use
+users = fetch_all_users(query="SELECT * FROM users")
+print(users)
