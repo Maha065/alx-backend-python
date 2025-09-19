@@ -92,3 +92,47 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+import unittest
+from unittest.mock import patch, PropertyMock
+from client import GithubOrgClient
+from fixtures import repos_payload, expected_repos, apache2_repos
+
+
+class TestGithubOrgClient(unittest.TestCase):
+    """Test GithubOrgClient.public_repos methods."""
+
+    def test_public_repos(self):
+        """Test that public_repos returns all repository names."""
+        client = GithubOrgClient("test_org")
+
+        with patch.object(
+            GithubOrgClient, "_public_repos_url", new_callable=PropertyMock
+        ) as mock_repos_url, patch("client.get_json") as mock_get_json:
+            mock_repos_url.return_value = "http://example.com/repos"
+            mock_get_json.return_value = repos_payload
+
+            result = client.public_repos()
+            self.assertEqual(result, expected_repos)
+            mock_repos_url.assert_called_once()
+            mock_get_json.assert_called_once_with("http://example.com/repos")
+
+    def test_public_repos_with_license(self):
+        """Test that public_repos filters repositories by license."""
+        client = GithubOrgClient("test_org")
+
+        with patch.object(
+            GithubOrgClient, "_public_repos_url", new_callable=PropertyMock
+        ) as mock_repos_url, patch("client.get_json") as mock_get_json:
+            mock_repos_url.return_value = "http://example.com/repos"
+            mock_get_json.return_value = repos_payload
+
+            result = client.public_repos(license="apache-2.0")
+            self.assertEqual(result, apache2_repos)
+            mock_repos_url.assert_called_once()
+            mock_get_json.assert_called_once_with("http://example.com/repos")
+
+
+if __name__ == "__main__":
+    unittest.main()
