@@ -22,3 +22,17 @@ class TestAccessNestedMap(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main()
 
+
+class TestAccessNestedMap(unittest.TestCase):
+    @parameterized.expand([
+        ({}, ("a",)),            # empty dict, should raise KeyError
+        ({"a": 1}, ("a", "b")),  # key "a" exists, but "b" is missing
+    ])
+    def test_access_nested_map_exception(self, nested_map, path):
+        """Test that KeyError is raised for invalid paths."""
+        with self.assertRaises(KeyError):
+            access_nested_map(nested_map, path)
+
+
+if __name__ == "__main__":
+    unittest.main()
