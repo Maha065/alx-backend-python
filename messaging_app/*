@@ -16,3 +16,11 @@ alx-backend-python/
     │   ├── urls.py
     │   └── wsgi.py
     ├── manage.py
+messaging_app/
+├── manage.py
+└── messaging_app/
+    ├── __init__.py
+    ├── asgi.py
+    ├── settings.py
+    ├── urls.py
+    └── wsgi.py
