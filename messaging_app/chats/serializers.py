@@ -1,34 +1,31 @@
-from rest_framework import serializers
-from .models import User, Conversation, Message
+class ConversationViewSet(viewsets.ModelViewSet):
+    queryset = Conversation.objects.all().order_by("-created_at")
+    serializer_class = ConversationSerializer
 
+    def create(self, request, *args, **kwargs):
+        # creates a conversation with participants
+        ...
+class MessageViewSet(viewsets.ModelViewSet):
+    queryset = Message.objects.all().order_by("sent_at")
+    serializer_class = MessageSerializer
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = [
-            'id',
-            'username',
-            'first_name',
-            'last_name',
-            'email',
-            'phone_number',
-            'role',
-            'created_at',
-        ]
+    def create(self, request, *args, **kwargs):
+        # creates a message in a conversation
+        ...
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from chats.views import ConversationViewSet, MessageViewSet
 
+router = DefaultRouter()
+router.register(r'conversations', ConversationViewSet, basename='conversation')
+router.register(r'messages', MessageViewSet, basename='message')
 
-class MessageSerializer(serializers.ModelSerializer):
-    sender = UserSerializer(read_only=True)
+urlpatterns = [
+    path('api/', include(router.urls)),
+]
+from django.urls import path, include
 
-    class Meta:
-        model = Message
-        fields = ['id', 'sender', 'message_body', 'sent_at']
-
-
-class ConversationSerializer(serializers.ModelSerializer):
-    participants = UserSerializer(many=True, read_only=True)
-    messages = MessageSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Conversation
-        fields = ['id', 'participants', 'messages', 'created_at']
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', include('chats.urls')),  # ensure this line exists
+]
