@@ -86,3 +86,29 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",  # 👈 global default
     ),
 }
+# messaging_app/settings.py
+
+INSTALLED_APPS = [
+    ...
+    "rest_framework",
+    "rest_framework_simplejwt",
+    "django_filters",   # 👈 add this
+    "messaging_app.chats",
+]
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
+    "DEFAULT_PAGINATION_CLASS": "messaging_app.chats.pagination.MessagePagination",
+    "PAGE_SIZE": 20,  # 👈 fallback if pagination class is missing
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.OrderingFilter",
+        "rest_framework.filters.SearchFilter",
+    ],
+}
