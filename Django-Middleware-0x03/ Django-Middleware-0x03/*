@@ -1,0 +1,9 @@
+cp -r messaging_app Django-Middleware-0x03
+cd Django-Middleware-0x03
+python -m venv venv
+source venv/bin/activate   # On macOS/Linux
+venv\Scripts\activate      # On Windows
+pip install -r requirements.txt
+pip install django djangorestframework
+python manage.py migrate
+python manage.py runserver
