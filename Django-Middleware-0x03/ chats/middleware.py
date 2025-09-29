@@ -41,3 +41,33 @@ class OffensiveLanguageMiddleware:
         else:
             ip = request.META.get("REMOTE_ADDR", "")
         return ip
+from django.http import HttpResponseForbidden
+
+
+class RolepermissionMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        user = getattr(request, "user", None)
+
+        # Check if user is authenticated and has the right role
+        if user and user.is_authenticated:
+            # Example: allow if superuser or staff (you can adapt to a custom role field)
+            if user.is_superuser or user.is_staff:
+                return self.get_response(request)
+
+            # If user model has a custom "role" field, check it
+            role = getattr(user, "role", None)
+            if role in ["admin", "moderator"]:
+                return self.get_response(request)
+
+            # Block others
+            return HttpResponseForbidden(
+                "<h1>403 Forbidden</h1><p>You do not have permission to perform this action.</p>"
+            )
+
+        # If user is not logged in, block access
+        return HttpResponseForbidden(
+            "<h1>403 Forbidden</h1><p>Authentication required.</p>"
+        )
