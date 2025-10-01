@@ -7,26 +7,26 @@ class Message(models.Model):
     receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name="received_messages")
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
-    edited = models.BooleanField(default=False)  # new field to track edits
+    edited = models.BooleanField(default=False)
+
+    # New field: reply threading
+    parent_message = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="replies"
+    )
 
     def __str__(self):
-        return f"Message from {self.sender} to {self.receiver} ({'edited' if self.edited else 'original'})"
+        if self.parent_message:
+            return f"Reply by {self.sender} to Message {self.parent_message.id}"
+        return f"Message from {self.sender} to {self.receiver}"
 
+    def get_thread(self):
+        """
+        Recursively fetch all replies to this message in threaded format.
+        """
+        thread = []
+        for reply in self.replies.a
 
-class Notification(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
-    message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name="notifications")
-    created_at = models.DateTimeField(auto_now_add=True)
-    is_read = models.BooleanField(default=False)
-
-    def __str__(self):
-        return f"Notification for {self.user} about message {self.message.id}"
-
-
-class MessageHistory(models.Model):
-    message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name="history")
-    old_content = models.TextField()
-    edited_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"History of message {self.message.id} at {self.edited_at}"
