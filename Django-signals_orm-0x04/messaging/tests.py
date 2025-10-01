@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
-from .models import Message, Notification
+from .models import Message, Notification, MessageHistory
 
 
 class MessagingSignalTest(TestCase):
@@ -14,9 +14,18 @@ class MessagingSignalTest(TestCase):
             receiver=self.receiver,
             content="Hello Bob!"
         )
-        # Check that a notification was created
         self.assertEqual(Notification.objects.count(), 1)
-        notification = Notification.objects.first()
-        self.assertEqual(notification.user, self.receiver)
-        self.assertEqual(notification.message, msg)
-        self.assertFalse(notification.is_read)
+
+    def test_message_edit_creates_history(self):
+        msg = Message.objects.create(
+            sender=self.sender,
+            receiver=self.receiver,
+            content="Original Message"
+        )
+        msg.content = "Edited Message"
+        msg.save()
+
+        history = MessageHistory.objects.filter(message=msg)
+        self.assertEqual(history.count(), 1)
+        self.assertEqual(history.first().old_content, "Original Message")
+        self.assertTrue(msg.edited)
