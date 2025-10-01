@@ -3,29 +3,26 @@ from django.contrib.auth.models import User
 from .models import Message, Notification, MessageHistory
 
 
-class MessagingSignalTest(TestCase):
+class UserDeletionTest(TestCase):
     def setUp(self):
-        self.sender = User.objects.create_user(username="alice", password="password123")
-        self.receiver = User.objects.create_user(username="bob", password="password123")
+        self.user1 = User.objects.create_user(username="alice", password="pass123")
+        self.user2 = User.objects.create_user(username="bob", password="pass123")
 
-    def test_notification_created_on_message(self):
-        msg = Message.objects.create(
-            sender=self.sender,
-            receiver=self.receiver,
-            content="Hello Bob!"
-        )
+    def test_user_deletion_cleans_related_data(self):
+        # Create a message and notification
+        msg = Message.objects.create(sender=self.user1, receiver=self.user2, content="Hi Bob")
+        msg.content = "Edited Hi Bob"
+        msg.save()  # creates MessageHistory
+
+        # Ensure objects exist
+        self.assertEqual(Message.objects.count(), 1)
         self.assertEqual(Notification.objects.count(), 1)
+        self.assertEqual(MessageHistory.objects.count(), 1)
 
-    def test_message_edit_creates_history(self):
-        msg = Message.objects.create(
-            sender=self.sender,
-            receiver=self.receiver,
-            content="Original Message"
-        )
-        msg.content = "Edited Message"
-        msg.save()
+        # Delete user1
+        self.user1.delete()
 
-        history = MessageHistory.objects.filter(message=msg)
-        self.assertEqual(history.count(), 1)
-        self.assertEqual(history.first().old_content, "Original Message")
-        self.assertTrue(msg.edited)
+        # Related data should be deleted
+        self.assertEqual(Message.objects.count(), 0)
+        self.assertEqual(Notification.objects.count(), 0)
+        self.assertEqual(MessageHistory.objects.count(), 0)
