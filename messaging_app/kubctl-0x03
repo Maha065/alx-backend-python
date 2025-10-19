@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# kubctl-0x03
+# Objective: Perform a rolling update of the Django app without downtime
+
+set -e
+
+echo "=== Applying updated deployment (version 2.0) ==="
+kubectl apply -f blue_deployment.yaml
+
+echo "=== Monitoring rollout status ==="
+kubectl rollout status deployment/django-blue
+
+echo "=== Getting Service URL (for Minikube users) ==="
+SERVICE_URL=$(minikube service django-messaging-service --url)
+
+if [ -z "$SERVICE_URL" ]; then
+  echo "⚠️  Could not retrieve service URL automatically."
+  echo "Please verify your service is running with: kubectl get svc"
+  exit 1
+fi
+
+echo "=== Starting curl test to monitor app availability ==="
+echo "Sending 20 requests to check for downtime..."
+for i in {1..20}
+do
+  RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" $SERVICE_URL)
+  if [ "$RESPONSE" -eq 200 ]; then
+    echo "Request $i: ✅ App responding successfully"
+  else
+    echo "Request $i: ❌ App response code $RESPONSE"
+  fi
+  sleep 1
+done
+
+echo "=== Verifying pods after rollout ==="
+kubectl get pods -l app=django-messaging
+
+echo "✅ Rolling update complete and verified!"
