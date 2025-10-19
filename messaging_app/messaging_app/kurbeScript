@@ -1,0 +1,51 @@
+#!/bin/bash
+
+# kurbeScript.sh
+# Objective: Start and verify a local Kubernetes cluster using Minikube
+
+echo "=== Checking if Minikube is installed ==="
+if ! command -v minikube &> /dev/null
+then
+    echo "Minikube is not installed. Please install Minikube first:"
+    echo "👉 https://minikube.sigs.k8s.io/docs/start/"
+    exit 1
+fi
+
+echo "Minikube is installed ✅"
+
+echo "=== Checking if kubectl is installed ==="
+if ! command -v kubectl &> /dev/null
+then
+    echo "kubectl not found. Installing kubectl..."
+    # For Linux; modify for macOS or Windows if needed
+    curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+    chmod +x kubectl
+    sudo mv kubectl /usr/local/bin/
+else
+    echo "kubectl is installed ✅"
+fi
+
+echo "=== Starting Minikube Cluster ==="
+minikube start
+
+if [ $? -ne 0 ]; then
+    echo "❌ Failed to start Minikube cluster."
+    exit 1
+fi
+
+echo "Minikube cluster started successfully ✅"
+
+echo "=== Verifying Cluster Information ==="
+kubectl cluster-info
+
+if [ $? -ne 0 ]; then
+    echo "❌ Unable to get cluster info. Please check your setup."
+    exit 1
+fi
+
+echo "Cluster is running correctly ✅"
+
+echo "=== Retrieving Available Pods ==="
+kubectl get pods -A
+
+echo "✅ Script completed successfully!"
