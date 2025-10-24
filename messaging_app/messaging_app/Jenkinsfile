@@ -1,12 +1,9 @@
 pipeline {
     agent any
 
-    tools {
-        python "Python3" // Optional, only if configured in Jenkins Global Tool Config
-    }
-
     environment {
         VENV_DIR = 'venv'
+        DOCKER_IMAGE = 'your-dockerhub-username/messaging_app:latest'
     }
 
     stages {
@@ -15,7 +12,7 @@ pipeline {
             steps {
                 echo 'Pulling code from GitHub...'
                 git branch: 'main', 
-                    url: 'https://github.com/alx-backend-python.git', 
+                    url: 'https://github.com/alx-backend-python.git',
                     credentialsId: 'github-credentials'
             }
         }
@@ -42,18 +39,36 @@ pipeline {
                 junit 'report.xml'
             }
         }
+
+        stage('Build Docker Image') {
+            steps {
+                echo 'Building Docker image...'
+                sh 'docker build -t ${DOCKER_IMAGE} messaging_app/.'
+            }
+        }
+
+        stage('Push Docker Image to Docker Hub') {
+            environment {
+                DOCKER_HUB_CREDENTIALS = credentials('dockerhub-credentials')
+            }
+            steps {
+                echo 'Logging in and pushing Docker image...'
+                sh 'echo $DOCKER_HUB_CREDENTIALS_PSW | docker login -u $DOCKER_HUB_CREDENTIALS_USR --password-stdin'
+                sh 'docker push ${DOCKER_IMAGE}'
+            }
+        }
     }
 
     post {
         always {
-            echo 'Cleaning up virtual environment...'
+            echo 'Cleaning up...'
             sh 'rm -rf ${VENV_DIR}'
         }
         success {
-            echo '✅ Build succeeded!'
+            echo '✅ Pipeline completed successfully!'
         }
         failure {
-            echo '❌ Build failed.'
+            echo '❌ Pipeline failed.'
         }
     }
 }
