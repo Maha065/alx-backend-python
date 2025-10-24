@@ -1,0 +1,15 @@
+pipeline {
+    agent any
+
+    environment {
+        // Virtual environment name for ShiningPanda
+        VENV_DIR = 'venv'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Pulling source code from GitHub...'
+                git branch: 'main', 
+                    credentialsId: 'github-creds', 
+                    url: 'https://github.com
