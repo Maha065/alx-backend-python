@@ -49,6 +49,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install flake8 coverage pytest pytest-cov
 
       - name: Wait for MySQL to be ready
         run: |
@@ -58,18 +59,31 @@ jobs:
             sleep 5
           done
 
+      - name: Run flake8 lint check
+        working-directory: ./messaging_app
+        run: |
+          echo "Running flake8 linting..."
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
+        # The first flake8 command fails the build on serious errors (E9, F63, F7, F82)
+        # The second shows general style warnings but does not fail the build.
+
       - name: Apply database migrations
         working-directory: ./messaging_app
         run: |
           python manage.py migrate
 
-      - name: Run Django tests
+      - name: Run Django tests with coverage
         working-directory: ./messaging_app
         run: |
-          pytest --ds=messaging_app.settings --junitxml=test-results.xml
+          coverage run --source='.' manage.py test
+          coverage xml -o coverage.xml
+          coverage report -m
 
-      - name: Upload test report
+      - name: Upload test and coverage reports
         uses: actions/upload-artifact@v4
         with:
-          name: django-test-results
-          path: messaging_app/test-results.xml
+          name: test-and-coverage-reports
+          path: |
+            messaging_app/coverage.xml
+            messaging_app/.coverage
