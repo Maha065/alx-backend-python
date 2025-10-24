@@ -1,15 +1,59 @@
 pipeline {
     agent any
 
+    tools {
+        python "Python3" // Optional, only if configured in Jenkins Global Tool Config
+    }
+
     environment {
-        // Virtual environment name for ShiningPanda
         VENV_DIR = 'venv'
     }
 
     stages {
+
         stage('Checkout') {
             steps {
-                echo 'Pulling source code from GitHub...'
+                echo 'Pulling code from GitHub...'
                 git branch: 'main', 
-                    credentialsId: 'github-creds', 
-                    url: 'https://github.com
+                    url: 'https://github.com/alx-backend-python.git', 
+                    credentialsId: 'github-credentials'
+            }
+        }
+
+        stage('Setup Python Environment') {
+            steps {
+                echo 'Setting up virtual environment...'
+                sh 'python3 -m venv ${VENV_DIR}'
+                sh '. ${VENV_DIR}/bin/activate && pip3 install --upgrade pip'
+                sh '. ${VENV_DIR}/bin/activate && pip3 install -r messaging_app/requirements.txt'
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                echo 'Running pytest...'
+                sh '. ${VENV_DIR}/bin/activate && pytest messaging_app/tests --junitxml=report.xml'
+            }
+        }
+
+        stage('Archive Test Report') {
+            steps {
+                echo 'Archiving test report...'
+                junit 'report.xml'
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Cleaning up virtual environment...'
+            sh 'rm -rf ${VENV_DIR}'
+        }
+        success {
+            echo '✅ Build succeeded!'
+        }
+        failure {
+            echo '❌ Build failed.'
+        }
+    }
+}
